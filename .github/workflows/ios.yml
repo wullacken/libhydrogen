@@ -29,9 +29,10 @@ jobs:
 
        - shell: bash
          run: |
+          lipo -info _install/lib/libhydrogen.a
           mkdir ${{env.macos_artifact}}
           cp -a _install/lib/libhydrogen.a ${{env.ios_artifact}}
-          cp -a hydrogen.h ${{env.ios_artifact}}
+          cp -a _install/include/hydrogen.h ${{env.ios_artifact}}
           tar chvzf ${{env.ios_artifact}}.tar.gz ${{env.ios_artifact}}
        - uses: actions/upload-artifact@v3
          with:

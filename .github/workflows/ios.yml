@@ -1,0 +1,52 @@
+name: CMake
+
+on:
+  workflow_dispatch
+    
+env:
+  ios_artifact: libhydrogen_ios_fat
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  IOS_DEPLOYMENT_TARGET: 12.0
+  
+  
+  
+jobs:
+    
+  build_ios_sim:
+      runs-on: macos-latest
+
+      steps:
+
+       - uses: actions/checkout@v3
+       - name: Configure CMake
+         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -GXcode -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_DEPLOYMENT_TARGET=${{env.IOS_DEPLOYMENT_TARGET}} "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" -DCMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH=NO -DCMAKE_INSTALL_PREFIX=`pwd`/_install -DCMAKE_IOS_INSTALL_COMBINED=YES
+
+       - name: Build
+         run: cmake --build ${{github.workspace}}/_builds --config Release --target install
+
+       - shell: bash
+         run: |
+          mkdir ${{env.macos_artifact}}
+          cp -a _install/lib/libhydrogen.a ${{env.ios_artifact}}
+          cp -a hydrogen.h ${{env.ios_artifact}}
+          tar chvzf ${{env.ios_artifact}}.tar.gz ${{env.ios_artifact}}
+       - uses: actions/upload-artifact@v3
+         with:
+          name: ${{env.ios_artifact}}
+          path: ${{env.ios_artifact}}.tar.gz
+
+
+       - uses: actions/download-artifact@v3
+         with:
+          name: ${{env.ios_artifact}}
+
+
+       - uses: actions/setup-java@v3
+         with:
+          java-version: '11'
+          distribution: 'zulu'
+
+       - name: maven
+         run: |
+          mvn deploy:deploy-file -DgroupId=eu.filekeep -DartifactId=${{env.ios_artifact}} -Dversion=${GITHUB_RUN_NUMBER} -Dfile=${{env.ios_artifact}}.tar.gz -DrepositoryId=github -Durl=https://maven.pkg.github.com/wullacken/libhydrogen -Dpackaging=tar.gz
+      

@@ -115,19 +115,17 @@ jobs:
 
        - uses: actions/checkout@v3
        - name: Configure CMake
-         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=${{matrix.ARCH}} -DCMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH=NO 
+         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=${{matrix.ARCH}} -DCMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH=NO -GXcode -DCMAKE_INSTALL_PREFIX=`pwd`/_install -DCMAKE_SYSTEM_NAME=Darwin
 
        - name: Build
-         run: cmake --build ${{github.workspace}}/build --config Release
+         run: cmake --build ${{github.workspace}}/build --config Release --target install
 
        - shell: bash
          run: |
           mkdir ${{env.macos_artifact}}
-          cp -a build/libhydrogen.a ${{env.macos_artifact}}
-          cp -a hydrogen.h ${{env.macos_artifact}}
+          cp -a _install/lib/libhydrogen.a ${{env.macos_artifact}}
+          cp -a _install/include/hydrogen.h ${{env.macos_artifact}}
           tar chvzf ${{env.macos_artifact}}_${{matrix.ARCH}}.tar.gz ${{env.macos_artifact}}
-
-
        - uses: actions/upload-artifact@v3
          with:
           name: ${{env.macos_artifact}}_${{matrix.ARCH}}
@@ -147,7 +145,6 @@ jobs:
        - name: maven
          run: |
           mvn deploy:deploy-file -DgroupId=eu.filekeep -DartifactId=${{env.macos_artifact}}_${{matrix.ARCH}} -Dversion=${GITHUB_RUN_NUMBER} -Dfile=${{env.macos_artifact}}_${{matrix.ARCH}}.tar.gz -DrepositoryId=github -Durl=https://maven.pkg.github.com/wullacken/libhydrogen -Dpackaging=tar.gz
-
       
       
     

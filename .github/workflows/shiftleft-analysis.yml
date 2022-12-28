@@ -1,6 +1,7 @@
 name: ShiftLeft Scan
 
-on: push
+on:
+  workflow_dispatch
 
 jobs:
   Scan-Build:

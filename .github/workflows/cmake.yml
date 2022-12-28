@@ -115,7 +115,7 @@ jobs:
 
        - uses: actions/checkout@v3
        - name: Configure CMake
-         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=${{matrix.ARCH}}
+         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=${{matrix.ARCH}} -DCMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH=NO 
 
        - name: Build
          run: cmake --build ${{github.workspace}}/build --config Release

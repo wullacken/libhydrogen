@@ -7,7 +7,10 @@ env:
   linux_artifact: libhydrogen_linux_x64
   windows_artifact: libhydrogen_windows_x64
   macos_artifact: libhydrogen_macos_x64
+  android_artifact: libhydrogen_android_aarch64
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  ANDROID_NDK_VERSION: '25.1.8937393'
+  ANDROID_CMAKE_VERSION: '3.22.1'
 
 
 jobs:
@@ -74,7 +77,7 @@ jobs:
     - shell: bash
       run: |
         mkdir ${{env.windows_artifact}}
-        cp -a build/libhydrogen.a ${{env.windows_artifact}}
+        cp -a build/Release/hydrogen.lib ${{env.windows_artifact}}
         cp -a hydrogen.h ${{env.windows_artifact}}
         tar chvzf ${{env.windows_artifact}}.tar.gz ${{env.windows_artifact}}
   
@@ -143,3 +146,71 @@ jobs:
           mvn deploy:deploy-file -DgroupId=eu.filekeep -DartifactId=${{env.macos_artifact}} -Dversion=${GITHUB_RUN_NUMBER} -Dfile=${{env.macos_artifact}}.tar.gz -DrepositoryId=github -Durl=https://maven.pkg.github.com/wullacken/libhydrogen -Dpackaging=tar.gz
 
       
+      
+    
+  build_android:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        BUILD_TYPE: [Release]
+    steps:
+    
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v3
+      with:
+         distribution: "zulu"
+         java-version: 11
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+      
+    - name: Cache NDK
+      id: ndk-cache
+      uses: actions/cache@v2
+      with:
+        path: /usr/local/lib/android/sdk/ndk
+        key: ${{ runner.os }}-NdkCache-${{ env.ANDROID_NDK_VERSION }}
+        
+    - name: Install Android SDK dependencies, configure and build
+      shell: bash
+      run: |
+        echo y | sdkmanager "ndk;${{ env.ANDROID_NDK_VERSION }}"
+        echo y | sdkmanager "cmake;${{ env.ANDROID_CMAKE_VERSION }}"
+        CMAKE_PATH=${ANDROID_SDK_ROOT}/cmake/${{ env.ANDROID_CMAKE_VERSION }}
+        export PATH=${CMAKE_PATH}/bin:$PATH
+        export ANDROID_NDK=${ANDROID_SDK_ROOT}/ndk/${{ env.ANDROID_NDK_VERSION }}
+        export ANDROID_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake
+        ${CMAKE_PATH}/bin/cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}}
+        ${CMAKE_PATH}/bin/cmake --build ${{github.workspace}}/build --config ${{matrix.BUILD_TYPE}}
+        
+    - shell: bash
+      run: |
+        mkdir ${{env.android_artifact}}
+        cp -a build/libhydrogen.a ${{env.android_artifact}}
+        cp -a hydrogen.h ${{env.android_artifact}}
+        tar chvzf ${{env.macos_artifact}}.tar.gz ${{env.android_artifact}}
+      
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{env.android_artifact}}
+        path: ${{env.android_artifact}}.tar.gz
+          
+          
+    - uses: actions/download-artifact@v3
+      with:
+        name: ${{env.android_artifact}}
+        
+      
+    - uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'zulu'
+        
+    - name: maven
+      run: |
+        mvn deploy:deploy-file -DgroupId=eu.filekeep -DartifactId=${{env.android_artifact}} -Dversion=${GITHUB_RUN_NUMBER} -Dfile=${{env.android_artifact}}.tar.gz -DrepositoryId=github -Durl=https://maven.pkg.github.com/wullacken/libhydrogen -Dpackaging=tar.gz
+        
+        
+        

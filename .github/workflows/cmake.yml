@@ -27,11 +27,8 @@ jobs:
     - shell: bash
       run: |
         mkdir ${{env.linux_artifact}}
-        mkdir ${{env.linux_artifact}}/Foundation
-        mkdir ${{env.linux_artifact}}/Util
-        cp -a build/lib ${{env.linux_artifact}}
-        cp -a Foundation/include ${{env.linux_artifact}}/Foundation
-        cp -a Util/include ${{env.linux_artifact}}/Util
+        cp -a build/libhydrogen.a ${{env.linux_artifact}}
+        cp -a libhydrogen.h ${{env.linux_artifact}}
         tar chvzf ${{env.linux_artifact}}.tar.gz ${{env.linux_artifact}}
   
   

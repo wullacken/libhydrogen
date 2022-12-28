@@ -5,6 +5,8 @@ on:
     
 env:
   linux_artifact: libhydrogen_linux_x64
+  windows_artifact: libhydrogen_windows_x64
+  macos_artifact: libhydrogen_macos_x64
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
@@ -52,3 +54,92 @@ jobs:
       run: |
         mvn deploy:deploy-file -DgroupId=eu.filekeep -DartifactId=${{env.linux_artifact}} -Dversion=${GITHUB_RUN_NUMBER} -Dfile=${{env.linux_artifact}}.tar.gz -DrepositoryId=github -Durl=https://maven.pkg.github.com/wullacken/libhydrogen -Dpackaging=tar.gz
         
+        
+        
+
+  build_windows:
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        BUILD_TYPE: [Release]
+    steps:
+    
+    - uses: actions/checkout@v3
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}}
+      
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{matrix.BUILD_TYPE}}
+      
+    - shell: bash
+      run: |
+        mkdir ${{env.windows_artifact}}
+        cp -a build/libhydrogen.a ${{env.windows_artifact}}
+        cp -a hydrogen.h ${{env.windows_artifact}}
+        tar chvzf ${{env.windows_artifact}}.tar.gz ${{env.windows_artifact}}
+  
+  
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{env.windows_artifact}}
+        path: ${{env.windows_artifact}}.tar.gz
+          
+          
+    - uses: actions/download-artifact@v3
+      with:
+        name: ${{env.windows_artifact}}
+        
+      
+    - uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'zulu'
+        
+    - name: maven
+      run: |
+        mvn deploy:deploy-file -DgroupId=eu.filekeep -DartifactId=${{env.windows_artifact}} -Dversion=${GITHUB_RUN_NUMBER} -Dfile=${{env.windows_artifact}}.tar.gz -DrepositoryId=github -Durl=https://maven.pkg.github.com/wullacken/libhydrogen -Dpackaging=tar.gz
+          
+          
+  build_macos:
+      runs-on: macos-latest
+      strategy:
+        matrix:
+          BUILD_TYPE: [Release]
+      steps:
+
+       - uses: actions/checkout@v3
+       - name: Configure CMake
+         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}}
+
+       - name: Build
+         run: cmake --build ${{github.workspace}}/build --config ${{matrix.BUILD_TYPE}}
+
+       - shell: bash
+         run: |
+          mkdir ${{env.macos_artifact}}
+          cp -a build/libhydrogen.a ${{env.macos_artifact}}
+          cp -a hydrogen.h ${{env.macos_artifact}}
+          tar chvzf ${{env.macos_artifact}}.tar.gz ${{env.macos_artifact}}
+
+
+       - uses: actions/upload-artifact@v3
+         with:
+          name: ${{env.macos_artifact}}
+          path: ${{env.macos_artifact}}.tar.gz
+
+
+       - uses: actions/download-artifact@v3
+         with:
+          name: ${{env.macos_artifact}}
+
+
+       - uses: actions/setup-java@v3
+         with:
+          java-version: '11'
+          distribution: 'zulu'
+
+       - name: maven
+         run: |
+          mvn deploy:deploy-file -DgroupId=eu.filekeep -DartifactId=${{env.macos_artifact}} -Dversion=${GITHUB_RUN_NUMBER} -Dfile=${{env.macos_artifact}}.tar.gz -DrepositoryId=github -Durl=https://maven.pkg.github.com/wullacken/libhydrogen -Dpackaging=tar.gz
+
+      

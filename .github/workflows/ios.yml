@@ -12,14 +12,17 @@ env:
   
 jobs:
     
-  build_ios_sim:
+  build_ios_fat:
+  
+      # https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-for-ios-tvos-or-watchos
+  
       runs-on: macos-latest
 
       steps:
 
        - uses: actions/checkout@v3
        - name: Configure CMake
-         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -GXcode -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_DEPLOYMENT_TARGET=${{env.IOS_DEPLOYMENT_TARGET}} "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" -DCMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH=NO -DCMAKE_INSTALL_PREFIX=`pwd`/_install -DCMAKE_IOS_INSTALL_COMBINED=YES
+         run: cmake -B ${{github.workspace}}/_builds -DCMAKE_BUILD_TYPE=Release -GXcode -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_DEPLOYMENT_TARGET=${{env.IOS_DEPLOYMENT_TARGET}} "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" -DCMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH=NO -DCMAKE_INSTALL_PREFIX=`pwd`/_install -DCMAKE_IOS_INSTALL_COMBINED=YES
 
        - name: Build
          run: cmake --build ${{github.workspace}}/_builds --config Release --target install

@@ -28,7 +28,7 @@ jobs:
       run: |
         mkdir ${{env.linux_artifact}}
         cp -a build/libhydrogen.a ${{env.linux_artifact}}
-        cp -a libhydrogen.h ${{env.linux_artifact}}
+        cp -a hydrogen.h ${{env.linux_artifact}}
         tar chvzf ${{env.linux_artifact}}.tar.gz ${{env.linux_artifact}}
   
   

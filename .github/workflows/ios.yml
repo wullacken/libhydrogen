@@ -17,12 +17,16 @@ jobs:
       # https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-for-ios-tvos-or-watchos
   
       runs-on: macos-latest
-
+      
+      strategy:
+        matrix:
+          ARCH: [arm64,x86_64]
+          
       steps:
 
        - uses: actions/checkout@v3
        - name: Configure CMake
-         run: cmake -B ${{github.workspace}}/_builds -DCMAKE_BUILD_TYPE=Release -GXcode -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_DEPLOYMENT_TARGET=${{env.IOS_DEPLOYMENT_TARGET}} "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" -DCMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH=NO -DCMAKE_INSTALL_PREFIX=`pwd`/_install -DCMAKE_IOS_INSTALL_COMBINED=NO
+         run: cmake -B ${{github.workspace}}/_builds -DCMAKE_BUILD_TYPE=Release -GXcode -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_DEPLOYMENT_TARGET=${{env.IOS_DEPLOYMENT_TARGET}} -DCMAKE_OSX_ARCHITECTURES=${{matrix.ARCH}} -DCMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH=NO -DCMAKE_INSTALL_PREFIX=`pwd`/_install -DCMAKE_IOS_INSTALL_COMBINED=NO
 
        - name: Build
          run: cmake --build ${{github.workspace}}/_builds --config Release --target install
@@ -30,19 +34,19 @@ jobs:
        - shell: bash
          run: |
           lipo -info _install/lib/libhydrogen.a
-          mkdir ${{env.macos_artifact}}
+          mkdir ${{env.ios_artifact}}
           cp -a _install/lib/libhydrogen.a ${{env.ios_artifact}}
           cp -a _install/include/hydrogen.h ${{env.ios_artifact}}
-          tar chvzf ${{env.ios_artifact}}.tar.gz ${{env.ios_artifact}}
+          tar chvzf ${{env.ios_artifact}}_${{matrix.ARCH}}.tar.gz ${{env.ios_artifact}}
        - uses: actions/upload-artifact@v3
          with:
-          name: ${{env.ios_artifact}}
-          path: ${{env.ios_artifact}}.tar.gz
+          name: ${{env.ios_artifact}}_${{matrix.ARCH}}
+          path: ${{env.ios_artifact}}_${{matrix.ARCH}}.tar.gz
 
 
        - uses: actions/download-artifact@v3
          with:
-          name: ${{env.ios_artifact}}
+          name: ${{env.ios_artifact}}_${{matrix.ARCH}}
 
 
        - uses: actions/setup-java@v3
@@ -52,5 +56,5 @@ jobs:
 
        - name: maven
          run: |
-          mvn deploy:deploy-file -DgroupId=eu.filekeep -DartifactId=${{env.ios_artifact}} -Dversion=${GITHUB_RUN_NUMBER} -Dfile=${{env.ios_artifact}}.tar.gz -DrepositoryId=github -Durl=https://maven.pkg.github.com/wullacken/libhydrogen -Dpackaging=tar.gz
+          mvn deploy:deploy-file -DgroupId=eu.filekeep -DartifactId=${{env.ios_artifact}}_${{matrix.ARCH}} -Dversion=${GITHUB_RUN_NUMBER} -Dfile=${{env.ios_artifact}}_${{matrix.ARCH}}.tar.gz -DrepositoryId=github -Durl=https://maven.pkg.github.com/wullacken/libhydrogen -Dpackaging=tar.gz
       

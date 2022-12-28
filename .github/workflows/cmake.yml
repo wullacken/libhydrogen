@@ -50,5 +50,5 @@ jobs:
         
     - name: maven
       run: |
-        mvn deploy:deploy-file -DgroupId=eu.filekeep -DartifactId=${{env.linux_artifact}} -Dversion=${GITHUB_RUN_NUMBER} -Dfile=${{env.linux_artifact}}.tar.gz -DrepositoryId=github -Durl=https://maven.pkg.github.com/wullacken/poco -Dpackaging=tar.gz
+        mvn deploy:deploy-file -DgroupId=eu.filekeep -DartifactId=${{env.linux_artifact}} -Dversion=${GITHUB_RUN_NUMBER} -Dfile=${{env.linux_artifact}}.tar.gz -DrepositoryId=github -Durl=https://maven.pkg.github.com/wullacken/libhydrogen -Dpackaging=tar.gz
         

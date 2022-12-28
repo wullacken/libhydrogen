@@ -1,0 +1,57 @@
+name: CMake
+
+on:
+  workflow_dispatch
+    
+env:
+  linux_artifact: libhydrogen_linux_x64
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+jobs:
+  build_linux:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        BUILD_TYPE: [Release]
+    steps:
+  
+    
+    - uses: actions/checkout@v3
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}}
+      
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{matrix.BUILD_TYPE}}
+      
+    - shell: bash
+      run: |
+        mkdir ${{env.linux_artifact}}
+        mkdir ${{env.linux_artifact}}/Foundation
+        mkdir ${{env.linux_artifact}}/Util
+        cp -a build/lib ${{env.linux_artifact}}
+        cp -a Foundation/include ${{env.linux_artifact}}/Foundation
+        cp -a Util/include ${{env.linux_artifact}}/Util
+        tar chvzf ${{env.linux_artifact}}.tar.gz ${{env.linux_artifact}}
+  
+  
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{env.linux_artifact}}
+        path: ${{env.linux_artifact}}.tar.gz
+          
+          
+    - uses: actions/download-artifact@v3
+      with:
+        name: ${{env.linux_artifact}}
+        
+      
+    - uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'zulu'
+        
+    - name: maven
+      run: |
+        mvn deploy:deploy-file -DgroupId=eu.filekeep -DartifactId=${{env.linux_artifact}} -Dversion=${GITHUB_RUN_NUMBER} -Dfile=${{env.linux_artifact}}.tar.gz -DrepositoryId=github -Durl=https://maven.pkg.github.com/wullacken/poco -Dpackaging=tar.gz
+        
